@@ -2,34 +2,44 @@
 
 namespace Haruka.Common.Configuration;
 
-class AppConfig {
-    public static IConfigurationRoot Current { get; private set; }
+public class AppConfig {
+    public static AppConfig Primary { get; private set; }
+
+    private readonly IConfigurationRoot config;
 
     public static void Initialize() {
-        Current = new ConfigurationBuilder()
-            .AddJsonFile("Haruka.Common.Settings.json", false)
-            .AddJsonFile("Haruka.Common.Settings.debug.json", true, true)
-            .AddJsonFile("Haruka.Common.Settings.local.json", true, true)
+        Primary = new AppConfig("Haruka.Common.Settings");
+    }
+
+    public AppConfig(string prefix) {
+        config = new ConfigurationBuilder()
+            .AddJsonFile(prefix + ".json", false)
+            .AddJsonFile(prefix + ".debug.json", true, true)
+            .AddJsonFile(prefix + ".local.json", true, true)
             .Build();
     }
 
-    public static string Get(string section, string value) {
-        return Current.GetSection(section).GetSection(value)?.Value;
+    public string Get(string section, string value) {
+        return config.GetSection(section).GetSection(value)?.Value;
     }
 
-    public static string Get(string section, string subsection, string value) {
-        return Current.GetSection(section).GetSection(subsection).GetSection(value).Value;
+    public string Get(string section, string subsection, string value) {
+        return config.GetSection(section).GetSection(subsection).GetSection(value).Value;
     }
 
-    public static int GetInt(string section, string value) {
-        return Current.GetSection(section).GetValue<int>(value);
+    public int GetInt(string section, string value) {
+        return config.GetSection(section).GetValue<int>(value);
     }
 
-    public static bool GetBool(string section, string value) {
-        return Current.GetSection(section).GetValue<bool>(value);
+    public bool GetBool(string section, string value) {
+        return config.GetSection(section).GetValue<bool>(value);
     }
 
-    public static bool GetBool(string section, string subsection, string value) {
-        return Current.GetSection(section).GetSection(subsection).GetValue<bool>(value);
+    public bool GetBool(string section, string subsection, string value) {
+        return config.GetSection(section).GetSection(subsection).GetValue<bool>(value);
+    }
+
+    public IConfigurationSection GetSection(string section) {
+        return config.GetSection(section);
     }
 }

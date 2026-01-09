@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
 using Haruka.Common.Collections;
-using Haruka.Common.Util;
 using Microsoft.Extensions.Logging;
 
 namespace Haruka.Common.Configuration;

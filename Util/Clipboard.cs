@@ -2,13 +2,13 @@
 
 public class Clipboard {
 
-    private static String str = "";
+    private static string str = "";
 
-    public static void Write(String value) {
+    public static void Write(string value) {
         str = value;
     }
 
-    public static String Read() {
+    public static string Read() {
         return str;
     }
 

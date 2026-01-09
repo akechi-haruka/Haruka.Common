@@ -15,7 +15,7 @@ public static class Log {
     public static void Initialize() {
         Loggers = new Dictionary<string, ILogger>();
         
-        IConfigurationSection loggingConfig = AppConfig.Current.GetSection("Logging");
+        IConfigurationSection loggingConfig = AppConfig.Primary.GetSection("Logging");
 
         factory = LoggerFactory.Create(builder => builder
             .AddConfiguration(loggingConfig)
@@ -23,17 +23,20 @@ public static class Log {
             .AddDebug()
             .AddFile(loggingConfig.GetSection("File"))
         );
-        Main = factory.CreateLogger("Main");
-        Conf = factory.CreateLogger("Conf");
+        Main = GetOrCreate("Main");
+        Conf = GetOrCreate("Conf");
         
         Main.LogInformation("Logging started.");
     }
 
     public static ILogger GetOrCreate(string key) {
-        if (Loggers[key] == null) {
-            Loggers[key] = factory.CreateLogger(key);
+        if (Loggers.TryGetValue(key, out ILogger value)) {
+            return value;
         }
 
-        return Loggers[key];
+        value = factory.CreateLogger(key);
+        Loggers[key] = value;
+
+        return value;
     }
 }
