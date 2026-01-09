@@ -2,7 +2,7 @@
 
 namespace Haruka.Common.Configuration;
 
-class Configuration {
+class AppConfig {
     public static IConfigurationRoot Current { get; private set; }
 
     public static void Initialize() {
@@ -14,22 +14,22 @@ class Configuration {
     }
 
     public static string Get(string section, string value) {
-        return Current.GetSection(section)?.GetSection(value)?.Value;
+        return Current.GetSection(section).GetSection(value)?.Value;
     }
 
     public static string Get(string section, string subsection, string value) {
-        return Current.GetSection(section)?.GetSection(subsection)?.GetSection(value)?.Value;
+        return Current.GetSection(section).GetSection(subsection).GetSection(value).Value;
     }
 
     public static int GetInt(string section, string value) {
-        return (Current.GetSection(section)?.GetValue<int>(value)).Value;
+        return Current.GetSection(section).GetValue<int>(value);
     }
 
     public static bool GetBool(string section, string value) {
-        return (Current.GetSection(section)?.GetValue<bool>(value)).Value;
+        return Current.GetSection(section).GetValue<bool>(value);
     }
 
     public static bool GetBool(string section, string subsection, string value) {
-        return (Current.GetSection(section)?.GetSection(subsection)?.GetValue<bool>(value)).Value;
+        return Current.GetSection(section).GetSection(subsection).GetValue<bool>(value);
     }
 }

@@ -1,34 +1,39 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Haruka.Common.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NReco.Logging.File;
 
-namespace LAHEE;
+namespace Haruka.Common;
 
-class Log {
+public static class Log {
     public static ILogger Main { get; private set; }
-    public static ILogger Network { get; private set; }
-    public static ILogger Data { get; private set; }
-    public static ILogger User { get; private set; }
-    public static ILogger RCheevos { get; private set; }
-    public static ILogger Websocket { get; private set; }
+    public static ILogger Conf { get; private set; }
+    public static Dictionary<string, ILogger> Loggers { get; private set; }
+
+    private static ILoggerFactory factory;
 
     public static void Initialize() {
-        IConfigurationSection loggingConfig = Configuration.Current.GetSection("Logging");
+        Loggers = new Dictionary<string, ILogger>();
+        
+        IConfigurationSection loggingConfig = AppConfig.Current.GetSection("Logging");
 
-        ILoggerFactory factory = LoggerFactory.Create(builder => builder
+        factory = LoggerFactory.Create(builder => builder
             .AddConfiguration(loggingConfig)
             .AddSimpleConsole(options => { options.SingleLine = true; })
             .AddDebug()
             .AddFile(loggingConfig.GetSection("File"))
         );
         Main = factory.CreateLogger("Main");
-        Network = factory.CreateLogger("Net ");
-        Data = factory.CreateLogger("Data");
-        User = factory.CreateLogger("User");
-        RCheevos = factory.CreateLogger("Rche");
-        Websocket = factory.CreateLogger("Webs");
-
+        Conf = factory.CreateLogger("Conf");
+        
         Main.LogInformation("Logging started.");
-        Main.LogInformation("Local Achievements Home Enhanced Edition " + Program.NAME);
+    }
+
+    public static ILogger GetOrCreate(string key) {
+        if (Loggers[key] == null) {
+            Loggers[key] = factory.CreateLogger(key);
+        }
+
+        return Loggers[key];
     }
 }

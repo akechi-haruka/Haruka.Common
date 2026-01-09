@@ -1,179 +1,118 @@
-﻿using OAS.Lib.Configuration;
-using OAS.Util.CodeHelpers;
-using OAS.Util.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
+using Haruka.Common.Collections;
+using Haruka.Common.Util;
+using Microsoft.Extensions.Logging;
 
-namespace OAS.Util.Configuration {
+namespace Haruka.Common.Configuration;
 
-    public class IniFile {
+public class IniFile {
+    public string Path { get; protected set; }
 
-        public const string SECTION_GENERAL = "General";
-        public const string SETTING_LANGUAGE = "Language";
-        public const string SECTION_UPDATE = "Update";
-        public const string SECTION_INTEGRATION = "Integration";
-        public const string SECTION_BUTTONS = "Buttons";
-        public const string SECTION_GAMELIST = "ApplicationList";
-        public const string SECTION_SOUND = "Sound";
-        public const string SECTION_DEVICELOADER = "DeviceLoader";
-        public const string SECTION_CONFIGFILES = "ConfigFiles";
-        public const string SECTION_USERUI = "UserUI";
-        public const string SECTION_CARD = "Card";
-        public const string SECTION_PRINTER = "Printer";
+    public static IniFile New(string iniPath) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            Log.Conf.LogTrace("Using Windows accessor");
+            return new IniFile(iniPath);
+        } else {
+            Log.Conf.LogTrace("Using custom parser");
+            return new IniParser(iniPath);
+        }
+    }
 
-        public Func<IniFile> ConfigurationProvider { get; set; }
+    protected IniFile(string iniPath) {
+        Path = new FileInfo(iniPath).FullName;
+        Log.Conf.LogInformation("Preparing " + Path);
+    }
 
-        protected string path;
-        string exe;
-        IniFile overrideFile;
+    public virtual string Read(string key, string section) {
+        Log.Conf.LogDebug("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key);
 
-        private StringBuilder daBuffa = new StringBuilder(65535 * 100);
-        private byte[] daBuffaForSections = new byte[65535 * 100];
-        private bool logging;
+        StringBuilder buf = new StringBuilder(65535);
+        buf.Clear();
+        NativeMethods.GetPrivateProfileString(section, key, String.Empty, buf, buf.MaxCapacity, Path);
+        Log.Conf.LogDebug("Read Result: " + buf);
 
-        public static IniFile New(string iniPath = null) {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                Log.WriteTraced("Using Windows accessor");
-                return new IniFile(iniPath);
-            } else {
-                Log.WriteTraced("Using custom parser");
-                return new IniParser(iniPath);
+        return buf.ToString();
+    }
+
+    private string GetFileName() {
+        return System.IO.Path.GetFileName(Path);
+    }
+
+    public virtual void Write(string key, string value, string section) {
+        Log.Conf.LogInformation("Updating " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key + " -> " + value);
+
+        NativeMethods.WritePrivateProfileString(section, key, value, Path);
+    }
+
+    public void Write(string key, object value, string section) {
+        Write(key, value?.ToString(), section);
+    }
+
+    public void DeleteKey(string key, string section) {
+        Write(key, null, section);
+    }
+
+    public void DeleteSection(string section) {
+        Write(null, null, section);
+    }
+
+    public bool KeyExists(string key, string section) {
+        return (Read(key, section) ?? "").Length > 0;
+    }
+
+    public virtual List<string> GetSections() {
+        Log.Conf.LogDebug("Reading " + GetFileName() + ": Querying sections", "Configuration");
+
+        byte[] buf = new byte[65535];
+        buf.Fill<byte>(0);
+        NativeMethods.GetPrivateProfileSectionNames(buf, buf.Length, Path);
+        string allSections = Encoding.ASCII.GetString(buf);
+        string[] sectionNames = allSections.Split('\0');
+        List<string> s = new List<string>();
+        foreach (string sectionName in sectionNames) {
+            if (sectionName != String.Empty) {
+                s.Add(sectionName);
             }
         }
 
-        public IniFile(string iniPath = null) {
-            try {
-                exe = Assembly.GetEntryAssembly()?.GetName()?.Name ?? "UnknownOASApplication";
-            } catch { }
-            path = new FileInfo(iniPath ?? exe + ".ini").FullName;
-            Log.Write("Preparing " + path, "Configuration");
+        return s;
+    }
 
-            if (ReadBool("AllowOverride", "Ini")) {
-                overrideFile = IniFile.New((iniPath ?? exe + ".ini") + ".Override.ini");
-            }
+    public virtual List<string> GetKeys(string section) {
+        Log.Conf.LogDebug("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "Querying keys");
 
-            logging = ReadBool("EnableAccessLogging", "Ini", true);
-        }
+        byte[] buf = new byte[65535];
+        buf.Fill<byte>(0);
+        NativeMethods.GetPrivateProfileSection(section, buf, buf.Length, Path);
+        string[] tmp = Encoding.ASCII.GetString(buf).Trim('\0').Split('\0');
 
-        public IniFile(FileInfo config) : this(config?.FullName) {
-        }
+        List<string> result = new List<string>();
 
-        public String GetPath() {
-            return path;
-        }
-
-        public virtual string Read(string key, string section = null) {
-            if (logging) {
-                Log.Write("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key, "Configuration");
-            }
-            daBuffa.Clear();
-            if (overrideFile != null) {
-                string overrideValue = overrideFile.Read(key, section);
-                if (overrideValue != String.Empty) {
-                    return overrideValue;
+        foreach (string entry in tmp) {
+            if (!entry.StartsWith('#') && !entry.StartsWith(';')) {
+                int index = entry.IndexOf('=');
+                if (index > -1) {
+                    result.Add(entry.Substring(0, index));
                 }
             }
-            NativeMethods.GetPrivateProfileString(section ?? exe, key, String.Empty, daBuffa, daBuffa.MaxCapacity, path);
-            if (logging) {
-                Log.Write("Read Result: " + daBuffa, "Configuration");
-            }
-            return daBuffa.ToString();
         }
 
-        private string GetFileName() {
-            return System.IO.Path.GetFileName(path);
-        }
+        return result;
+    }
 
-        public virtual void Write(string key, string value, string section = null) {
-            if (logging) {
-                Log.Write("Updating " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key + " -> " + value, "Configuration");
-            }
-            NativeMethods.WritePrivateProfileString(section ?? exe, key, value, path);
-        }
+    public string ReadString(string key, string section, string def = null) {
+        string s = Read(key, section);
+        return String.IsNullOrEmpty(s) ? def : s;
+    }
 
-        public void Write(string key, object value, string section = null) {
-            Write(key, value?.ToString(), section);
-        }
+    public int ReadInt(string key, string section, int def = 0) {
+        string s = Read(key, section);
+        return Int32.TryParse(s, out int i) ? i : def;
+    }
 
-        public void DeleteKey(string key, string section = null) {
-            Write(key, null, section ?? exe);
-        }
-
-        public void DeleteSection(string section = null) {
-            Write(null, null, section ?? exe);
-        }
-
-        public bool KeyExists(string key, string section = null) {
-            return (Read(key, section) ?? "").Length > 0;
-        }
-
-        public virtual List<string> GetSections() {
-            if (logging) {
-                Log.Write("Reading " + GetFileName() + ": Querying sections", "Configuration");
-            }
-            daBuffaForSections.Fill<byte>(0);
-            NativeMethods.GetPrivateProfileSectionNames(daBuffaForSections, daBuffaForSections.Length, path);
-            string allSections = Encoding.ASCII.GetString(daBuffaForSections);
-            string[] sectionNames = allSections.Split('\0');
-            List<string> s = new List<string>();
-            foreach (string sectionName in sectionNames) {
-                if (sectionName != string.Empty) {
-                    s.Add(sectionName);
-                }
-            }
-            return s;
-        }
-
-        public virtual List<string> GetKeys(string section = null) {
-            if (logging) {
-                Log.Write("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "Querying keys", "Configuration");
-            }
-            daBuffaForSections.Fill<byte>(0);
-            NativeMethods.GetPrivateProfileSection(section, daBuffaForSections, daBuffaForSections.Length, path);
-            string[] tmp = Encoding.ASCII.GetString(daBuffaForSections).Trim('\0').Split('\0');
-
-            List<string> result = new List<string>();
-
-            foreach (string entry in tmp) {
-                if (!entry.StartsWith("#") && !entry.StartsWith(";")) {
-                    try {
-                        result.Add(entry.Substring(0, entry.IndexOf("=")));
-                    } catch { }
-                }
-            }
-
-            return result;
-        }
-
-        public string GetHashOfContents() {
-            return Crypto.BytesToString(Crypto.HashFile(path));
-        }
-
-        public string ReadString(string key, string section = null, string def = null) {
-            string s = Read(key, section);
-            return String.IsNullOrEmpty(s) ? def : s;
-        }
-
-        public int ReadInt(string key, string section = null, int def = 0) {
-            string s = Read(key, section);
-            if (Int32.TryParse(s, out int i)) {
-                return i;
-            } else {
-                return def;
-            }
-        }
-
-        public bool ReadBool(string key, string section = null, bool def = false) {
-            string s = Read(key, section);
-            if (Boolean.TryParse(s, out bool b)) {
-                return b;
-            } else {
-                return def;
-            }
-        }
+    public bool ReadBool(string key, string section, bool def = false) {
+        string s = Read(key, section);
+        return Boolean.TryParse(s, out bool b) ? b : def;
     }
 }

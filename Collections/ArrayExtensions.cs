@@ -1,4 +1,4 @@
-﻿namespace Haruka.Common.Util;
+﻿namespace Haruka.Common.Collections;
 
 public static class ArrayExtensions {
 

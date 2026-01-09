@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Haruka.Common.Util;
 
-namespace OAS.SystemData {
-    public class Clipboard {
+public class Clipboard {
 
-        private static String str = "";
+    private static String str = "";
 
-        public static void Write(String value) {
-            str = value;
-        }
-
-        public static String Read() {
-            return str;
-        }
-
+    public static void Write(String value) {
+        str = value;
     }
+
+    public static String Read() {
+        return str;
+    }
+
 }
