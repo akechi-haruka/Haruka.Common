@@ -8,6 +8,9 @@
         <Description>Common classes for Haruka Akechi's projects</Description>
         <AssemblyVersion>1.0</AssemblyVersion>
         <FileVersion>1.0</FileVersion>
+        <Copyright>(c) 2026 Haruka Akechi and contributors</Copyright>
+        <PackageProjectUrl>https://github.com/akechi-haruka/Haruka.Common</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/akechi-haruka/Haruka.Common</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
