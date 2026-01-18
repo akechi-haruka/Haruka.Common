@@ -31,6 +31,10 @@ public class AppConfig {
         return config.GetSection(section).GetValue<int>(value);
     }
 
+    public int GetInt(string section, string subsection, string value) {
+        return config.GetSection(section).GetSection(subsection).GetValue<int>(value);
+    }
+
     public bool GetBool(string section, string value) {
         return config.GetSection(section).GetValue<bool>(value);
     }
