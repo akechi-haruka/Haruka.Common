@@ -12,10 +12,10 @@ public class IniFile {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             Log.Conf.LogTrace("Using Windows accessor");
             return new IniFile(iniPath);
-        } else {
-            Log.Conf.LogTrace("Using custom parser");
-            return new IniParser(iniPath);
         }
+
+        Log.Conf.LogTrace("Using custom parser");
+        return new IniParser(iniPath);
     }
 
     protected IniFile(string iniPath) {

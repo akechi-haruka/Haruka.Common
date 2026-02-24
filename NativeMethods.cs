@@ -90,7 +90,7 @@ public class WindowHandleInfo {
     private IntPtr mainHandle;
 
     public WindowHandleInfo(IntPtr handle) {
-        this.mainHandle = handle;
+        mainHandle = handle;
     }
 
     public List<IntPtr> GetAllChildHandles() {
@@ -108,7 +108,7 @@ public class WindowHandleInfo {
         return childHandles;
     }
 
-    private bool EnumWindow(IntPtr hWnd, IntPtr lParam) {
+    private static bool EnumWindow(IntPtr hWnd, IntPtr lParam) {
         GCHandle gcChildhandlesList = GCHandle.FromIntPtr(lParam);
 
         if (gcChildhandlesList.Target == null) {
@@ -116,7 +116,7 @@ public class WindowHandleInfo {
         }
 
         List<IntPtr> childHandles = gcChildhandlesList.Target as List<IntPtr>;
-        childHandles.Add(hWnd);
+        childHandles?.Add(hWnd);
 
         return true;
     }

@@ -20,7 +20,7 @@ public class AppConfig {
     }
 
     public string Get(string section, string value) {
-        return config.GetSection(section).GetSection(value)?.Value;
+        return config.GetSection(section).GetSection(value).Value;
     }
 
     public string Get(string section, string subsection, string value) {
