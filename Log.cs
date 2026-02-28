@@ -12,17 +12,20 @@ public static class Log {
 
     private static ILoggerFactory factory;
 
-    public static void Initialize() {
+    public static void Initialize(bool silent = false) {
         Loggers = new Dictionary<string, ILogger>();
         
         IConfigurationSection loggingConfig = AppConfig.Primary.GetSection("Logging");
 
-        factory = LoggerFactory.Create(builder => builder
-            .AddConfiguration(loggingConfig)
-            .AddSimpleConsole(options => { options.SingleLine = true; })
-            .AddDebug()
-            .AddFile(loggingConfig.GetSection("File"))
-        );
+        factory = LoggerFactory.Create(builder => {
+            builder
+                .AddConfiguration(loggingConfig)
+                .AddDebug()
+                .AddFile(loggingConfig.GetSection("File"));
+            if (!silent) {
+                builder.AddSimpleConsole(options => { options.SingleLine = true; });
+            }
+        });
         Main = GetOrCreate("Main");
         Conf = GetOrCreate("Conf");
         
