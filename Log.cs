@@ -14,21 +14,21 @@ public static class Log {
 
     public static void Initialize(bool silent = false) {
         Loggers = new Dictionary<string, ILogger>();
-        
+
         IConfigurationSection loggingConfig = AppConfig.Primary.GetSection("Logging");
 
         factory = LoggerFactory.Create(builder => {
             builder
                 .AddConfiguration(loggingConfig)
                 .AddDebug()
-                .AddFile(loggingConfig.GetSection("File"));
+                .AddFile(loggingConfig.GetSection("File"), opts => { opts.HandleFileError = (err) => { err.UseNewLogFileName(err.LogFileName + "_" + DateTime.Now.Ticks); }; });
             if (!silent) {
                 builder.AddSimpleConsole(options => { options.SingleLine = true; });
             }
         });
         Main = GetOrCreate("Main");
         Conf = GetOrCreate("Conf");
-        
+
         Main.LogInformation("Logging started.");
     }
 
