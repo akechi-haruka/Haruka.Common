@@ -23,7 +23,7 @@ public class IniFile {
         Log.Conf.LogInformation("Preparing " + Path);
     }
 
-    public virtual string Read(string key, string section) {
+    public virtual string Read(string key, string section = null) {
         Log.Conf.LogDebug("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key);
 
         StringBuilder buf = new StringBuilder(65535);
@@ -38,13 +38,13 @@ public class IniFile {
         return System.IO.Path.GetFileName(Path);
     }
 
-    public virtual void Write(string key, string value, string section) {
+    public virtual void Write(string key, string value, string section = null) {
         Log.Conf.LogInformation("Updating " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key + " -> " + value);
 
         NativeMethods.WritePrivateProfileString(section, key, value, Path);
     }
 
-    public void Write(string key, object value, string section) {
+    public void Write(string key, object value, string section = null) {
         Write(key, value?.ToString(), section);
     }
 
@@ -100,17 +100,17 @@ public class IniFile {
         return result;
     }
 
-    public string ReadString(string key, string section, string def = null) {
+    public string ReadString(string key, string section = null, string def = null) {
         string s = Read(key, section);
         return String.IsNullOrEmpty(s) ? def : s;
     }
 
-    public int ReadInt(string key, string section, int def = 0) {
+    public int ReadInt(string key, string section = null, int def = 0) {
         string s = Read(key, section);
         return Int32.TryParse(s, out int i) ? i : def;
     }
 
-    public bool ReadBool(string key, string section, bool def = false) {
+    public bool ReadBool(string key, string section = null, bool def = false) {
         string s = Read(key, section);
         return Boolean.TryParse(s, out bool b) ? b : def;
     }
