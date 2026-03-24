@@ -79,8 +79,9 @@ public class IniParser : IniFile {
         ArrayList tmpArray = new ArrayList();
 
         foreach (SectionPair pair in keyPairs.Keys) {
-            if (pair.Section == section)
+            if (pair.Section == section) {
                 tmpArray.Add(pair.Key);
+            }
         }
 
         return new List<string>((string[])tmpArray.ToArray(typeof(string)));
