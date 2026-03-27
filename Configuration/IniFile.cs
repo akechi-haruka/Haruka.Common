@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Text;
 using Haruka.Common.Collections;
 using Microsoft.Extensions.Logging;
@@ -6,7 +7,10 @@ using Microsoft.Extensions.Logging;
 namespace Haruka.Common.Configuration;
 
 public class IniFile {
-    public string Path { get; protected set; }
+
+    public const String DEFAULT_SECTION = "Default";
+    
+    public string Path { get; }
 
     public static IniFile New(string iniPath) {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
@@ -26,9 +30,23 @@ public class IniFile {
     public virtual string Read(string key, string section = null) {
         Log.Conf.LogDebug("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key);
 
-        StringBuilder buf = new StringBuilder(65535);
-        buf.Clear();
-        NativeMethods.GetPrivateProfileString(section, key, String.Empty, buf, buf.MaxCapacity, Path);
+        if (section == null) {
+            section = DEFAULT_SECTION;
+        }
+
+        StringBuilder buf = new StringBuilder(32);
+        bool retry;
+        do {
+            buf.Clear();
+            int read = NativeMethods.GetPrivateProfileString(section, key, String.Empty, buf, buf.Capacity, Path);
+            if (read >= buf.Capacity - 1) {
+                buf.Capacity *= 2;
+                retry = true;
+            } else {
+                retry = false;
+            }
+        } while (retry);
+
         Log.Conf.LogDebug("Read Result: " + buf);
 
         return buf.ToString();
@@ -41,7 +59,12 @@ public class IniFile {
     public virtual void Write(string key, string value, string section = null) {
         Log.Conf.LogInformation("Updating " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "" + key + " -> " + value);
 
-        NativeMethods.WritePrivateProfileString(section, key, value, Path);
+        if (section == null) {
+            section = DEFAULT_SECTION;
+        }
+        if (!NativeMethods.WritePrivateProfileString(section, key, value, Path)) {
+            throw new IOException("Failed to write to " + Path, new Win32Exception());
+        }
     }
 
     public void Write(string key, object value, string section = null) {
@@ -63,10 +86,20 @@ public class IniFile {
     public virtual List<string> GetSections() {
         Log.Conf.LogDebug("Reading " + GetFileName() + ": Querying sections", "Configuration");
 
-        byte[] buf = new byte[65535];
-        buf.Fill<byte>(0);
-        NativeMethods.GetPrivateProfileSectionNames(buf, buf.Length, Path);
-        string allSections = Encoding.ASCII.GetString(buf);
+        byte[] buf = new byte[32];
+        bool retry;
+        do {
+            buf.Fill<byte>(0);
+            int read = NativeMethods.GetPrivateProfileSectionNames(buf, buf.Length, Path);
+            if (read * 2 >= buf.Length - 3) {
+                buf = new byte[buf.Length * 2];
+                retry = true;
+            } else {
+                retry = false;
+            }
+        } while (retry);
+
+        string allSections = Encoding.Unicode.GetString(buf);
         string[] sectionNames = allSections.Split('\0');
         List<string> s = new List<string>();
         foreach (string sectionName in sectionNames) {
@@ -81,10 +114,20 @@ public class IniFile {
     public virtual List<string> GetKeys(string section) {
         Log.Conf.LogDebug("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "Querying keys");
 
-        byte[] buf = new byte[65535];
-        buf.Fill<byte>(0);
-        NativeMethods.GetPrivateProfileSection(section, buf, buf.Length, Path);
-        string[] tmp = Encoding.ASCII.GetString(buf).Trim('\0').Split('\0');
+        byte[] buf = new byte[32];
+        bool retry;
+        do {
+            buf.Fill<byte>(0);
+            int read = 
+                NativeMethods.GetPrivateProfileSection(section, buf, buf.Length, Path);
+            if (read * 2 >= buf.Length - 3) {
+                buf = new byte[buf.Length * 2];
+                retry = true;
+            } else {
+                retry = false;
+            }
+        } while (retry);
+        string[] tmp = Encoding.Unicode.GetString(buf).Trim('\0').Split('\0');
 
         List<string> result = new List<string>();
 
