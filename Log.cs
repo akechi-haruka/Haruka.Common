@@ -9,15 +9,14 @@ public static class Log {
     public static ILogger Main { get; private set; }
     public static ILogger Conf { get; private set; }
     public static Dictionary<string, ILogger> Loggers { get; private set; }
-
-    private static ILoggerFactory factory;
+    public static ILoggerFactory Factory { get; private set; }
 
     public static void Initialize(bool silent = false) {
         Loggers = new Dictionary<string, ILogger>();
 
         IConfigurationSection loggingConfig = AppConfig.Primary.GetSection("Logging");
 
-        factory = LoggerFactory.Create(builder => {
+        Factory = LoggerFactory.Create(builder => {
             builder
                 .AddConfiguration(loggingConfig)
                 .AddDebug()
@@ -37,7 +36,7 @@ public static class Log {
             return value;
         }
 
-        value = factory.CreateLogger(key);
+        value = Factory.CreateLogger(key);
         Loggers[key] = value;
 
         return value;
