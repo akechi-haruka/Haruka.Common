@@ -1,12 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
 using static Haruka.Common.WindowHandleInfo;
 
 namespace Haruka.Common;
 
 public static class NativeMethods {
-
     public const int SW_SHOWMINNOACTIVE = 7;
     public const int SW_RESTORE = 9;
     public const int SW_HIDE = 0;
@@ -28,13 +26,13 @@ public static class NativeMethods {
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int GetWindowTextLength(IntPtr hWnd);
 
-    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
-    public static extern int GetPrivateProfileString(string section, string key, string @default, StringBuilder retVal, int size, string filePath);
-    
+    public static extern int GetPrivateProfileString(string section, string key, string @default, byte[] retVal, int size, string filePath);
+
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
     public static extern int GetPrivateProfileSectionNames(byte[] lpszReturnBuffer, int nSize, string lpFileName);
 
@@ -53,8 +51,10 @@ public static class NativeMethods {
     public static extern bool AllocConsole();
 
     internal const uint STD_OUTPUT_HANDLE = 0xFFFFFFF5;
+
     [DllImport("kernel32.dll")]
     public static extern IntPtr GetStdHandle(uint nStdHandle);
+
     [DllImport("kernel32.dll")]
     public static extern int SetStdHandle(uint nStdHandle, IntPtr handle);
 
@@ -63,7 +63,6 @@ public static class NativeMethods {
 
     [DllImport("user32.dll")]
     public static extern int MessageBox(IntPtr hWnd, string text, string caption, int options);
-
 }
 
 public class WindowHandleInfo {

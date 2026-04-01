@@ -7,9 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace Haruka.Common.Configuration;
 
 public class IniFile {
-
     public const String DEFAULT_SECTION = "Default";
-    
+
     public string Path { get; }
 
     public static IniFile New(string iniPath) {
@@ -34,22 +33,24 @@ public class IniFile {
             section = DEFAULT_SECTION;
         }
 
-        StringBuilder buf = new StringBuilder(32);
+        byte[] buf = new byte[32];
         bool retry;
         do {
-            buf.Clear();
-            int read = NativeMethods.GetPrivateProfileString(section, key, String.Empty, buf, buf.Capacity, Path);
-            if (read >= buf.Capacity - 1) {
-                buf.Capacity *= 2;
+            buf.Fill<byte>(0);
+            int read = NativeMethods.GetPrivateProfileString(section, key, String.Empty, buf, buf.Length, Path);
+            if (read * 2 >= buf.Length - 3) {
+                buf = new byte[buf.Length * 2];
                 retry = true;
             } else {
                 retry = false;
             }
         } while (retry);
 
-        Log.Conf.LogDebug("Read Result: " + buf);
+        string str = Encoding.Unicode.GetString(buf).Trim('\0');
 
-        return buf.ToString();
+        Log.Conf.LogDebug("Read Result: " + str);
+
+        return str;
     }
 
     private string GetFileName() {
@@ -62,6 +63,7 @@ public class IniFile {
         if (section == null) {
             section = DEFAULT_SECTION;
         }
+
         if (!NativeMethods.WritePrivateProfileString(section, key, value, Path)) {
             throw new IOException("Failed to write to " + Path, new Win32Exception());
         }
@@ -71,15 +73,15 @@ public class IniFile {
         Write(key, value?.ToString(), section);
     }
 
-    public void DeleteKey(string key, string section) {
+    public void DeleteKey(string key, string section = null) {
         Write(key, null, section);
     }
 
-    public void DeleteSection(string section) {
+    public void DeleteSection(string section = null) {
         Write(null, null, section);
     }
 
-    public bool KeyExists(string key, string section) {
+    public bool KeyExists(string key, string section = null) {
         return (Read(key, section) ?? "").Length > 0;
     }
 
@@ -118,7 +120,7 @@ public class IniFile {
         bool retry;
         do {
             buf.Fill<byte>(0);
-            int read = 
+            int read =
                 NativeMethods.GetPrivateProfileSection(section, buf, buf.Length, Path);
             if (read * 2 >= buf.Length - 3) {
                 buf = new byte[buf.Length * 2];
@@ -127,6 +129,7 @@ public class IniFile {
                 retry = false;
             }
         } while (retry);
+
         string[] tmp = Encoding.Unicode.GetString(buf).Trim('\0').Split('\0');
 
         List<string> result = new List<string>();
