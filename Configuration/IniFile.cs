@@ -37,7 +37,7 @@ public class IniFile {
         bool retry;
         do {
             buf.Fill<byte>(0);
-            int read = NativeMethods.GetPrivateProfileString(section, key, String.Empty, buf, buf.Length, Path);
+            int read = NativeMethods.GetPrivateProfileString(section, key, "", buf, buf.Length, Path);
             if (read * 2 >= buf.Length - 3) {
                 buf = new byte[buf.Length * 2];
                 retry = true;
@@ -46,7 +46,7 @@ public class IniFile {
             }
         } while (retry);
 
-        string str = Encoding.Unicode.GetString(buf).Trim('\0');
+        string str = Encoding.ASCII.GetString(buf).Trim('\0');
 
         Log.Conf.LogDebug("Read Result: " + str);
 
@@ -101,11 +101,11 @@ public class IniFile {
             }
         } while (retry);
 
-        string allSections = Encoding.Unicode.GetString(buf);
+        string allSections = Encoding.ASCII.GetString(buf);
         string[] sectionNames = allSections.Split('\0');
         List<string> s = new List<string>();
         foreach (string sectionName in sectionNames) {
-            if (sectionName != String.Empty) {
+            if (sectionName != "") {
                 s.Add(sectionName);
             }
         }
@@ -130,7 +130,7 @@ public class IniFile {
             }
         } while (retry);
 
-        string[] tmp = Encoding.Unicode.GetString(buf).Trim('\0').Split('\0');
+        string[] tmp = Encoding.ASCII.GetString(buf).Trim('\0').Split('\0');
 
         List<string> result = new List<string>();
 

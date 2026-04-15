@@ -64,8 +64,13 @@ public class IniParser : IniFile {
         }
     }
 
-    public override string Read(string key, string section) {
+    public override string Read(string key, string section = null) {
         Log.Conf.LogDebug("Reading " + Path + ": " + (section != null ? "[" + section + "] " : "") + "" + key);
+
+        if (section == null) {
+            section = DEFAULT_SECTION;
+        }
+
         SectionPair sectionPair;
         sectionPair.Section = section;
         sectionPair.Key = key;
@@ -76,18 +81,18 @@ public class IniParser : IniFile {
     }
 
     public override List<string> GetKeys(string section) {
-        ArrayList tmpArray = new ArrayList();
-
-        foreach (SectionPair pair in keyPairs.Keys) {
-            if (pair.Section == section) {
-                tmpArray.Add(pair.Key);
-            }
-        }
-
-        return new List<string>((string[])tmpArray.ToArray(typeof(string)));
+        return keyPairs.Keys.OfType<SectionPair>().Where(sp => sp.Section == section).Select(sp => sp.Key).ToList();
     }
 
-    public override void Write(string key, string value, string section) {
+    public override List<string> GetSections() {
+        return keyPairs.Keys.OfType<SectionPair>().Select(sp => sp.Section).ToList();
+    }
+
+    public override void Write(string key, string value, string section = null) {
+        if (section == null) {
+            section = DEFAULT_SECTION;
+        }
+
         SectionPair sectionPair;
         sectionPair.Section = section;
         sectionPair.Key = key;
