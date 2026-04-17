@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
-using System.Text;
 using Haruka.Common.Collections;
 using Microsoft.Extensions.Logging;
 
@@ -33,20 +32,20 @@ public class IniFile {
             section = DEFAULT_SECTION;
         }
 
-        byte[] buf = new byte[32];
+        char[] buf = new char[32];
         bool retry;
         do {
-            buf.Fill<byte>(0);
-            int read = NativeMethods.GetPrivateProfileString(section, key, "", buf, buf.Length, Path);
+            buf.Fill('\0');
+            int read = NativeMethods.GetPrivateProfileString(section, key, "", buf, buf.Length / 2, Path);
             if (read * 2 >= buf.Length - 3) {
-                buf = new byte[buf.Length * 2];
+                buf = new char[buf.Length * 2];
                 retry = true;
             } else {
                 retry = false;
             }
         } while (retry);
 
-        string str = Encoding.ASCII.GetString(buf).Trim('\0');
+        string str = new String(buf, 0, buf.Length).Trim('\0');
 
         Log.Conf.LogDebug("Read Result: " + str);
 
@@ -88,20 +87,20 @@ public class IniFile {
     public virtual List<string> GetSections() {
         Log.Conf.LogDebug("Reading " + GetFileName() + ": Querying sections", "Configuration");
 
-        byte[] buf = new byte[32];
+        char[] buf = new char[32];
         bool retry;
         do {
-            buf.Fill<byte>(0);
+            buf.Fill('\0');
             int read = NativeMethods.GetPrivateProfileSectionNames(buf, buf.Length, Path);
             if (read * 2 >= buf.Length - 3) {
-                buf = new byte[buf.Length * 2];
+                buf = new char[buf.Length * 2];
                 retry = true;
             } else {
                 retry = false;
             }
         } while (retry);
 
-        string allSections = Encoding.ASCII.GetString(buf);
+        string allSections = new String(buf, 0, buf.Length);
         string[] sectionNames = allSections.Split('\0');
         List<string> s = new List<string>();
         foreach (string sectionName in sectionNames) {
@@ -116,21 +115,21 @@ public class IniFile {
     public virtual List<string> GetKeys(string section) {
         Log.Conf.LogDebug("Reading " + GetFileName() + ": " + (section != null ? "[" + section + "] " : "") + "Querying keys");
 
-        byte[] buf = new byte[32];
+        char[] buf = new char[32];
         bool retry;
         do {
-            buf.Fill<byte>(0);
+            buf.Fill('\0');
             int read =
                 NativeMethods.GetPrivateProfileSection(section, buf, buf.Length, Path);
             if (read * 2 >= buf.Length - 3) {
-                buf = new byte[buf.Length * 2];
+                buf = new char[buf.Length * 2];
                 retry = true;
             } else {
                 retry = false;
             }
         } while (retry);
 
-        string[] tmp = Encoding.ASCII.GetString(buf).Trim('\0').Split('\0');
+        string[] tmp = new String(buf, 0, buf.Length).Trim('\0').Split('\0');
 
         List<string> result = new List<string>();
 
