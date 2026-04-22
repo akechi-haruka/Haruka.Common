@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Haruka.Common.Configuration;
 
 public class IniFile {
-    public const String DEFAULT_SECTION = "Default";
+    public const string DEFAULT_SECTION = "Default";
 
     public string Path { get; }
 
@@ -45,7 +45,7 @@ public class IniFile {
             }
         } while (retry);
 
-        string str = new String(buf, 0, buf.Length).Trim('\0');
+        string str = new string(buf, 0, buf.Length).Trim('\0');
 
         Log.Conf.LogDebug("Read Result: " + str);
 
@@ -100,7 +100,7 @@ public class IniFile {
             }
         } while (retry);
 
-        string allSections = new String(buf, 0, buf.Length);
+        string allSections = new string(buf, 0, buf.Length);
         string[] sectionNames = allSections.Split('\0');
         List<string> s = new List<string>();
         foreach (string sectionName in sectionNames) {
@@ -129,7 +129,7 @@ public class IniFile {
             }
         } while (retry);
 
-        string[] tmp = new String(buf, 0, buf.Length).Trim('\0').Split('\0');
+        string[] tmp = new string(buf, 0, buf.Length).Trim('\0').Split('\0');
 
         List<string> result = new List<string>();
 
