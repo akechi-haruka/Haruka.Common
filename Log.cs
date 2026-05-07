@@ -9,21 +9,20 @@ public static class Log {
     public static ILogger Main { get; private set; }
     public static ILogger Conf { get; private set; }
     public static Dictionary<string, ILogger> Loggers { get; private set; }
+    public static ILoggerFactory Factory { get; private set; }
 
-    private static ILoggerFactory factory;
-
-    public static void Initialize(bool silent = false) {
+    public static void Initialize(bool silent = false, bool singleLine = true) {
         Loggers = new Dictionary<string, ILogger>();
 
         IConfigurationSection loggingConfig = AppConfig.Primary.GetSection("Logging");
 
-        factory = LoggerFactory.Create(builder => {
+        Factory = LoggerFactory.Create(builder => {
             builder
                 .AddConfiguration(loggingConfig)
                 .AddDebug()
                 .AddFile(loggingConfig.GetSection("File"), opts => { opts.HandleFileError = (err) => { err.UseNewLogFileName(err.LogFileName + "_" + DateTime.Now.Ticks); }; });
             if (!silent) {
-                builder.AddSimpleConsole(options => { options.SingleLine = true; });
+                builder.AddSimpleConsole(options => { options.SingleLine = singleLine; });
             }
         });
         Main = GetOrCreate("Main");
@@ -37,7 +36,7 @@ public static class Log {
             return value;
         }
 
-        value = factory.CreateLogger(key);
+        value = Factory.CreateLogger(key);
         Loggers[key] = value;
 
         return value;
