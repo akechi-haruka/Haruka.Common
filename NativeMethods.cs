@@ -15,4 +15,7 @@ public static class NativeMethods {
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ThrowOnUnmappableChar = true)]
     public static extern int GetPrivateProfileSection(string lpAppName, [Out] char[] lpszReturnBuffer, int nSize, string lpFileName);
+    
+    [DllImport("user32.dll")]
+    public static extern int MessageBox(IntPtr hWnd, string text, string caption, int options);
 }
