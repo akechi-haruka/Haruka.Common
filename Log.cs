@@ -39,4 +39,8 @@ public static class Log {
 
         return value;
     }
+
+    public static void FlushAndDispose() {
+        factory.Dispose();
+    }
 }
