@@ -43,6 +43,6 @@ public static class Log {
     }
 
     public static void FlushAndDispose() {
-        Factory.Dispose();
+        Factory?.Dispose();
     }
 }
