@@ -11,6 +11,7 @@
         <Copyright>(c) 2026 Haruka Akechi and contributors</Copyright>
         <PackageProjectUrl>https://github.com/akechi-haruka/Haruka.Common</PackageProjectUrl>
         <RepositoryUrl>https://github.com/akechi-haruka/Haruka.Common</RepositoryUrl>
+        <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
     </PropertyGroup>
 
     <ItemGroup>
